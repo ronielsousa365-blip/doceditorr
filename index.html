@@ -1,435 +1,263 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0" />
-  <meta name="theme-color" content="#4F46E5" />
-  <meta name="description" content="Editor e conversor de documentos" />
-  <meta name="apple-mobile-web-app-capable" content="yes" />
-  <meta name="apple-mobile-web-app-status-bar-style" content="default" />
-  <meta name="apple-mobile-web-app-title" content="DocEditor" />
-  <title>DocEditor</title>
-  <link rel="manifest" href="manifest.json" />
-  <link rel="apple-touch-icon" href="icon-192.png" />
-  <style>
-    * { box-sizing: border-box; margin: 0; padding: 0; }
-    :root {
-      --accent: #4F46E5;
-      --accent-light: #EEF2FF;
-      --bg: #ffffff;
-      --bg2: #f8f7ff;
-      --border: #e0e0e0;
-      --text: #1a1a2e;
-      --text2: #555577;
-      --text3: #9999bb;
-    }
-    @media (prefers-color-scheme: dark) {
-      :root {
-        --bg: #13131f;
-        --bg2: #1e1e30;
-        --border: #2e2e4a;
-        --text: #e8e8ff;
-        --text2: #aaaacc;
-        --text3: #666688;
-      }
-    }
-    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: var(--bg); color: var(--text); height: 100dvh; display: flex; flex-direction: column; overflow: hidden; }
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="theme-color" content="#00f0ff">
+<title>DocEditor Cyber</title>
+<link rel="manifest" href="manifest.json">
 
-    /* Header */
-    #header { background: var(--accent); color: white; padding: 12px 16px; display: flex; align-items: center; gap: 10px; flex-shrink: 0; }
-    #header h1 { font-size: 17px; font-weight: 600; flex: 1; }
-    #header-btns { display: flex; gap: 6px; }
-    .hbtn { background: rgba(255,255,255,0.2); border: none; border-radius: 8px; color: white; padding: 7px 10px; font-size: 13px; cursor: pointer; }
-
-    /* Bottom nav */
-    #nav { display: flex; background: var(--bg2); border-top: 1px solid var(--border); flex-shrink: 0; }
-    .nav-tab { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 3px; padding: 8px 4px; font-size: 10px; color: var(--text3); cursor: pointer; border: none; background: none; transition: color 0.15s; }
-    .nav-tab svg { width: 22px; height: 22px; stroke: currentColor; fill: none; stroke-width: 1.8; }
-    .nav-tab.active { color: var(--accent); }
-    .nav-tab.active svg { stroke-width: 2.2; }
-
-    /* Panels */
-    #panels { flex: 1; overflow: hidden; position: relative; }
-    .panel { display: none; height: 100%; flex-direction: column; overflow: hidden; }
-    .panel.active { display: flex; }
-
-    /* Toolbar */
-    #toolbar { display: flex; padding: 6px 8px; gap: 4px; border-bottom: 1px solid var(--border); background: var(--bg2); overflow-x: auto; flex-shrink: 0; }
-    .tbtn { background: none; border: 1px solid transparent; border-radius: 6px; padding: 6px 10px; font-size: 14px; cursor: pointer; color: var(--text2); white-space: nowrap; }
-    .tbtn:active { background: var(--accent-light); color: var(--accent); }
-    .tbtn.sep { border-left: 1px solid var(--border); margin: 0 2px; padding-left: 6px; }
-
-    /* Editor */
-    #editor { flex: 1; padding: 16px; overflow-y: auto; outline: none; font-size: 16px; line-height: 1.75; color: var(--text); }
-    #editor:empty:before { content: 'Comece a escrever aqui...'; color: var(--text3); pointer-events: none; }
-
-    /* Status bar */
-    #statusbar { padding: 4px 12px; border-top: 1px solid var(--border); font-size: 11px; color: var(--text3); display: flex; gap: 12px; background: var(--bg2); flex-shrink: 0; }
-
-    /* Generic panel content */
-    .panel-scroll { flex: 1; overflow-y: auto; padding: 16px; }
-    .section-title { font-size: 13px; font-weight: 600; color: var(--text2); margin: 14px 0 8px; text-transform: uppercase; letter-spacing: 0.05em; }
-    .section-title:first-child { margin-top: 0; }
-
-    /* Text tools */
-    .tool-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 12px; }
-    .tool-card { background: var(--bg2); border: 1px solid var(--border); border-radius: 10px; padding: 12px; cursor: pointer; font-size: 13px; color: var(--text); text-align: center; transition: all 0.15s; }
-    .tool-card:active { background: var(--accent-light); border-color: var(--accent); color: var(--accent); }
-    .tool-card .tc-icon { font-size: 22px; margin-bottom: 4px; }
-    .tool-card .tc-name { font-weight: 500; font-size: 12px; }
-    textarea.tt-area { width: 100%; border: 1px solid var(--border); border-radius: 10px; padding: 12px; font-size: 14px; background: var(--bg); color: var(--text); resize: none; height: 110px; font-family: inherit; line-height: 1.6; margin-bottom: 8px; }
-    .tt-result { background: var(--bg2); border: 1px solid var(--border); border-radius: 10px; padding: 12px; font-size: 14px; min-height: 70px; color: var(--text); white-space: pre-wrap; word-break: break-all; }
-    .action-row { display: flex; gap: 8px; margin-top: 8px; }
-    .abtn { flex: 1; background: var(--bg2); border: 1px solid var(--border); border-radius: 10px; padding: 10px; font-size: 13px; cursor: pointer; color: var(--text); text-align: center; }
-    .abtn.primary { background: var(--accent); color: white; border-color: var(--accent); }
-
-    /* Find & Replace */
-    .fr-block { background: var(--bg2); border-radius: 10px; padding: 14px; margin-bottom: 10px; }
-    .fr-label { font-size: 12px; color: var(--text3); margin-bottom: 4px; }
-    input.fr-inp { width: 100%; border: 1px solid var(--border); border-radius: 8px; padding: 10px 12px; font-size: 14px; background: var(--bg); color: var(--text); margin-bottom: 2px; }
-    .fr-info { font-size: 13px; color: var(--text2); margin-top: 8px; }
-
-    /* Stats */
-    .stat-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 16px; }
-    .stat-card { background: var(--bg2); border-radius: 12px; padding: 14px; }
-    .stat-lbl { font-size: 11px; color: var(--text3); margin-bottom: 4px; }
-    .stat-val { font-size: 26px; font-weight: 600; color: var(--text); }
-    .freq-item { display: flex; align-items: center; gap: 8px; padding: 8px 0; border-bottom: 1px solid var(--border); font-size: 13px; }
-    .freq-item:last-child { border-bottom: none; }
-    .freq-word { font-weight: 500; flex: 1; }
-    .freq-bar { height: 6px; border-radius: 3px; background: var(--accent); opacity: 0.7; min-width: 4px; }
-    .freq-n { color: var(--text3); min-width: 20px; text-align: right; }
-
-    /* Export */
-    .export-card { display: flex; align-items: center; gap: 12px; background: var(--bg2); border: 1px solid var(--border); border-radius: 12px; padding: 14px 16px; margin-bottom: 10px; cursor: pointer; transition: all 0.15s; }
-    .export-card:active { border-color: var(--accent); background: var(--accent-light); }
-    .export-icon { font-size: 28px; width: 36px; text-align: center; }
-    .export-name { font-size: 14px; font-weight: 500; color: var(--text); }
-    .export-desc { font-size: 12px; color: var(--text3); }
-
-    /* Toast */
-    #toast { position: fixed; bottom: 80px; left: 50%; transform: translateX(-50%); background: #1e1b4b; color: #e0e7ff; font-size: 13px; padding: 9px 20px; border-radius: 20px; opacity: 0; transition: opacity 0.3s; pointer-events: none; white-space: nowrap; z-index: 99; }
-    #toast.show { opacity: 1; }
-  </style>
+<style>
+*{margin:0;padding:0;box-sizing:border-box;}
+:root{
+--bg:#08111f;
+--bg2:#111c2f;
+--card:#15233a;
+--accent:#00f0ff;
+--accent2:#7c4dff;
+--text:#e8f7ff;
+--text2:#8fb7c9;
+--border:#20324d;
+}
+body{
+background:linear-gradient(180deg,#08111f,#111827);
+color:var(--text);
+font-family:Segoe UI,sans-serif;
+height:100vh;
+display:flex;
+flex-direction:column;
+overflow:hidden;
+}
+header{
+background:rgba(0,0,0,.25);
+backdrop-filter:blur(10px);
+border-bottom:1px solid var(--border);
+padding:14px;
+display:flex;
+align-items:center;
+justify-content:space-between;
+}
+header h1{font-size:18px;color:var(--accent);}
+.header-actions{display:flex;gap:8px;}
+.btn{
+background:var(--card);
+color:var(--text);
+padding:10px 14px;
+border-radius:10px;
+border:1px solid var(--border);
+cursor:pointer;
+}
+.toolbar{
+display:flex;
+gap:8px;
+padding:10px;
+background:#0c1627;
+overflow-x:auto;
+}
+.toolbar button{
+background:var(--card);
+color:var(--text);
+padding:8px 12px;
+border:none;
+border-radius:8px;
+cursor:pointer;
+}
+.upload-box{
+padding:12px;
+background:#0c1627;
+display:flex;
+gap:10px;
+}
+#editor{
+flex:1;
+padding:20px;
+outline:none;
+overflow-y:auto;
+font-size:17px;
+line-height:1.7;
+}
+.bottom{
+background:#0c1627;
+padding:10px;
+display:flex;
+justify-content:space-between;
+font-size:13px;
+color:var(--text2);
+}
+.export-grid{
+display:grid;
+grid-template-columns:1fr 1fr;
+gap:10px;
+padding:15px;
+background:#0c1627;
+}
+.card{
+background:var(--card);
+padding:15px;
+border-radius:12px;
+text-align:center;
+cursor:pointer;
+}
+</style>
 </head>
 <body>
 
-<div id="header">
-  <h1>📝 DocEditor</h1>
-  <div id="header-btns">
-    <button class="hbtn" onclick="clearEditor()">🗑</button>
-    <button class="hbtn" onclick="copyAll()">📋</button>
-  </div>
+<header>
+<h1>⚡ DocEditor Cyber</h1>
+
+<div class="header-actions">
+<button class="btn" onclick="copyText()">📋 Copiar</button>
+<button class="btn" onclick="clearEditor()">🗑 Limpar</button>
+</div>
+</header>
+
+<div class="toolbar">
+<button onclick="cmd('bold')"><b>N</b></button>
+<button onclick="cmd('italic')"><i>I</i></button>
+<button onclick="cmd('underline')"><u>S</u></button>
+<button onclick="cmd('insertUnorderedList')">• Lista</button>
 </div>
 
-<div id="panels">
-  <!-- EDITOR -->
-  <div class="panel active" id="panel-editor">
-    <div id="toolbar">
-      <button class="tbtn" onclick="cmd('bold')"><b>N</b></button>
-      <button class="tbtn" onclick="cmd('italic')"><i>I</i></button>
-      <button class="tbtn" onclick="cmd('underline')"><u>S</u></button>
-      <button class="tbtn sep" onclick="cmd('justifyLeft')">⬅</button>
-      <button class="tbtn" onclick="cmd('justifyCenter')">⬛</button>
-      <button class="tbtn" onclick="cmd('justifyRight')">➡</button>
-      <button class="tbtn sep" onclick="cmd('insertUnorderedList')">• Lista</button>
-      <button class="tbtn" onclick="cmd('insertOrderedList')">1. Lista</button>
-      <button class="tbtn sep" onclick="cmd('undo')">↩</button>
-      <button class="tbtn" onclick="cmd('redo')">↪</button>
-    </div>
-    <div id="editor" contenteditable="true" oninput="updateStatus()"></div>
-    <div id="statusbar">
-      <span id="sb-w">0 palavras</span>
-      <span id="sb-c">0 chars</span>
-      <span id="sb-r">0 min leitura</span>
-    </div>
-  </div>
-
-  <!-- FERRAMENTAS -->
-  <div class="panel" id="panel-tools">
-    <div class="panel-scroll">
-      <div class="section-title">Cole seu texto</div>
-      <textarea class="tt-area" id="tt-in" placeholder="Cole ou escreva aqui para transformar..."></textarea>
-      <div class="section-title">Capitalização</div>
-      <div class="tool-grid">
-        <div class="tool-card" onclick="tt('upper')"><div class="tc-icon">🔠</div><div class="tc-name">MAIÚSCULAS</div></div>
-        <div class="tool-card" onclick="tt('lower')"><div class="tc-icon">🔡</div><div class="tc-name">minúsculas</div></div>
-        <div class="tool-card" onclick="tt('title')"><div class="tc-icon">📖</div><div class="tc-name">Título</div></div>
-        <div class="tool-card" onclick="tt('sentence')"><div class="tc-icon">✏️</div><div class="tc-name">Frase</div></div>
-      </div>
-      <div class="section-title">Limpeza</div>
-      <div class="tool-grid">
-        <div class="tool-card" onclick="tt('trim')"><div class="tc-icon">🧹</div><div class="tc-name">Remover espaços extras</div></div>
-        <div class="tool-card" onclick="tt('lines')"><div class="tc-icon">📄</div><div class="tc-name">Remover linhas em branco</div></div>
-        <div class="tool-card" onclick="tt('dedupe')"><div class="tc-icon">🔁</div><div class="tc-name">Remover duplicatas</div></div>
-        <div class="tool-card" onclick="tt('sort')"><div class="tc-icon">🔤</div><div class="tc-name">Ordenar A→Z</div></div>
-      </div>
-      <div class="section-title">Codificação</div>
-      <div class="tool-grid">
-        <div class="tool-card" onclick="tt('b64e')"><div class="tc-icon">🔐</div><div class="tc-name">→ Base64</div></div>
-        <div class="tool-card" onclick="tt('b64d')"><div class="tc-icon">🔓</div><div class="tc-name">Base64 →</div></div>
-        <div class="tool-card" onclick="tt('urle')"><div class="tc-icon">🔗</div><div class="tc-name">→ URL encode</div></div>
-        <div class="tool-card" onclick="tt('urld')"><div class="tc-icon">🔗</div><div class="tc-name">URL decode →</div></div>
-      </div>
-      <div class="section-title">Resultado</div>
-      <div class="tt-result" id="tt-out">O resultado aparecerá aqui</div>
-      <div class="action-row">
-        <button class="abtn" onclick="copyResult()">📋 Copiar</button>
-        <button class="abtn primary" onclick="sendToEditor()">→ Editor</button>
-      </div>
-    </div>
-  </div>
-
-  <!-- LOCALIZAR -->
-  <div class="panel" id="panel-find">
-    <div class="panel-scroll">
-      <div class="section-title">Localizar e substituir</div>
-      <div class="fr-block">
-        <div class="fr-label">Localizar</div>
-        <input class="fr-inp" id="fi" placeholder="Texto a localizar..." />
-        <div class="fr-label" style="margin-top:10px">Substituir por</div>
-        <input class="fr-inp" id="ri" placeholder="Novo texto..." />
-      </div>
-      <div class="action-row">
-        <button class="abtn" onclick="doFind()">🔍 Localizar</button>
-        <button class="abtn primary" onclick="doReplace()">✏️ Substituir tudo</button>
-      </div>
-      <button class="abtn" style="margin-top:8px;width:100%" onclick="doClear()">❌ Limpar marcações</button>
-      <div class="fr-info" id="fr-info"></div>
-    </div>
-  </div>
-
-  <!-- ESTATÍSTICAS -->
-  <div class="panel" id="panel-stats">
-    <div class="panel-scroll">
-      <div class="section-title">Estatísticas do texto</div>
-      <div class="stat-grid" id="stat-grid"></div>
-      <div class="section-title">Palavras mais frequentes</div>
-      <div id="freq-list"></div>
-      <button class="abtn" style="margin-top:12px;width:100%" onclick="loadStats()">🔄 Atualizar</button>
-    </div>
-  </div>
-
-  <!-- EXPORTAR -->
-  <div class="panel" id="panel-export">
-    <div class="panel-scroll">
-      <div class="section-title">Escolha o formato</div>
-      <div class="export-card" onclick="exportAs('txt')">
-        <div class="export-icon">📄</div>
-        <div><div class="export-name">Texto puro (.txt)</div><div class="export-desc">Sem formatação, só o texto</div></div>
-      </div>
-      <div class="export-card" onclick="exportAs('html')">
-        <div class="export-icon">🌐</div>
-        <div><div class="export-name">HTML (.html)</div><div class="export-desc">Com toda a formatação</div></div>
-      </div>
-      <div class="export-card" onclick="exportAs('md')">
-        <div class="export-icon">📝</div>
-        <div><div class="export-name">Markdown (.md)</div><div class="export-desc">Negrito, listas e mais</div></div>
-      </div>
-      <div class="export-card" onclick="exportAs('json')">
-        <div class="export-icon">{ }</div>
-        <div><div class="export-name">JSON (.json)</div><div class="export-desc">Linhas como array</div></div>
-      </div>
-      <div class="export-card" onclick="exportAs('csv')">
-        <div class="export-icon">📊</div>
-        <div><div class="export-name">CSV (.csv)</div><div class="export-desc">Linhas separadas por vírgula</div></div>
-      </div>
-      <div class="export-card" onclick="printDoc()">
-        <div class="export-icon">🖨️</div>
-        <div><div class="export-name">Imprimir / Salvar PDF</div><div class="export-desc">Via diálogo do dispositivo</div></div>
-      </div>
-    </div>
-  </div>
+<div class="upload-box">
+<input type="file" id="fileInput" accept=".txt,.pdf">
+<button class="btn" onclick="loadFile()">📂 Abrir Arquivo</button>
 </div>
 
-<!-- Bottom Nav -->
-<nav id="nav">
-  <button class="nav-tab active" onclick="goTo('editor', this)">
-    <svg viewBox="0 0 24 24"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
-    Editor
-  </button>
-  <button class="nav-tab" onclick="goTo('tools', this)">
-    <svg viewBox="0 0 24 24"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/></svg>
-    Ferramentas
-  </button>
-  <button class="nav-tab" onclick="goTo('find', this)">
-    <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
-    Localizar
-  </button>
-  <button class="nav-tab" onclick="goTo('stats', this); loadStats()">
-    <svg viewBox="0 0 24 24"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>
-    Estatísticas
-  </button>
-  <button class="nav-tab" onclick="goTo('export', this)">
-    <svg viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
-    Exportar
-  </button>
-</nav>
+<div id="editor" contenteditable="true"></div>
 
-<div id="toast"></div>
+<div class="export-grid">
+<div class="card" onclick="exportFile('txt')">📄 TXT</div>
+<div class="card" onclick="exportFile('html')">🌐 HTML</div>
+<div class="card" onclick="window.print()">🖨 PDF</div>
+</div>
+
+<div class="bottom">
+<span id="words">0 palavras</span>
+<span>Salvamento automático</span>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
 
 <script>
-  // Register service worker
-  if ('serviceWorker' in navigator) {
-    navigator.serviceWorker.register('sw.js');
-  }
+const editor = document.getElementById('editor');
 
-  function goTo(name, el) {
-    document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
-    document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active'));
-    document.getElementById('panel-' + name).classList.add('active');
-    el.classList.add('active');
-  }
+if('serviceWorker' in navigator){
+navigator.serviceWorker.register('sw.js');
+}
 
-  function cmd(c, v) {
-    document.getElementById('editor').focus();
-    document.execCommand(c, false, v || null);
-  }
+function cmd(c){
+document.execCommand(c,false,null);
+editor.focus();
+}
 
-  function getText() { return document.getElementById('editor').innerText || ''; }
-  function getHTML() { return document.getElementById('editor').innerHTML || ''; }
+function updateStats(){
+const text = editor.innerText.trim();
+const words = text ? text.split(/\s+/).length : 0;
+document.getElementById('words').textContent = words + ' palavras';
+}
 
-  function updateStatus() {
-    const t = getText().trim();
-    const w = t ? t.split(/\s+/).filter(x=>x).length : 0;
-    document.getElementById('sb-w').textContent = w + ' palavras';
-    document.getElementById('sb-c').textContent = t.length + ' chars';
-    document.getElementById('sb-r').textContent = Math.max(1, Math.round(w/200)) + ' min leitura';
-  }
+function saveContent(){
+localStorage.setItem('doceditor-content',editor.innerHTML);
+}
 
-  function clearEditor() {
-    if (confirm('Limpar tudo?')) { document.getElementById('editor').innerHTML = ''; updateStatus(); }
-  }
+function loadContent(){
+const saved = localStorage.getItem('doceditor-content');
+if(saved){
+editor.innerHTML = saved;
+updateStats();
+}
+}
 
-  function copyAll() {
-    navigator.clipboard.writeText(getText()).then(() => toast('Copiado!'));
-  }
+editor.addEventListener('input',()=>{
+updateStats();
+saveContent();
+});
 
-  function toast(msg) {
-    const t = document.getElementById('toast');
-    t.textContent = msg; t.classList.add('show');
-    setTimeout(() => t.classList.remove('show'), 2000);
-  }
+function clearEditor(){
+editor.innerHTML='';
+saveContent();
+updateStats();
+}
 
-  // Text tools
-  function tt(type) {
-    const inp = document.getElementById('tt-in').value;
-    if (!inp.trim()) { toast('Cole um texto primeiro'); return; }
-    let r = inp;
-    if (type==='upper') r = inp.toUpperCase();
-    else if (type==='lower') r = inp.toLowerCase();
-    else if (type==='title') r = inp.toLowerCase().replace(/\b\w/g, c=>c.toUpperCase());
-    else if (type==='sentence') r = inp.toLowerCase().replace(/(^\s*\w|[.!?]\s*\w)/g, c=>c.toUpperCase());
-    else if (type==='trim') r = inp.split('\n').map(l=>l.replace(/\s+/g,' ').trim()).join('\n');
-    else if (type==='lines') r = inp.split('\n').filter(l=>l.trim()).join('\n');
-    else if (type==='dedupe') r = [...new Set(inp.split('\n'))].join('\n');
-    else if (type==='sort') r = inp.split('\n').sort((a,b)=>a.localeCompare(b,'pt')).join('\n');
-    else if (type==='b64e') { try { r = btoa(unescape(encodeURIComponent(inp))); } catch(e) { r='Erro'; } }
-    else if (type==='b64d') { try { r = decodeURIComponent(escape(atob(inp))); } catch(e) { r='Erro: não é Base64 válido'; } }
-    else if (type==='urle') r = encodeURIComponent(inp);
-    else if (type==='urld') { try { r = decodeURIComponent(inp); } catch(e) { r='Erro'; } }
-    document.getElementById('tt-out').textContent = r;
-  }
+function copyText(){
+navigator.clipboard.writeText(editor.innerText);
+}
 
-  function copyResult() {
-    const r = document.getElementById('tt-out').textContent;
-    if (r === 'O resultado aparecerá aqui') { toast('Nenhum resultado'); return; }
-    navigator.clipboard.writeText(r).then(() => toast('Copiado!'));
-  }
+function exportFile(type){
+let content='';
+let mime='text/plain';
 
-  function sendToEditor() {
-    const r = document.getElementById('tt-out').textContent;
-    if (r === 'O resultado aparecerá aqui') { toast('Nenhum resultado'); return; }
-    const ed = document.getElementById('editor');
-    ed.innerHTML += '<p>' + r.replace(/\n/g,'<br>') + '</p>';
-    goTo('editor', document.querySelector('.nav-tab'));
-    toast('Enviado para o editor!');
-    updateStatus();
-  }
+if(type==='txt'){
+content = editor.innerText;
+}
 
-  // Find & replace
-  function doFind() {
-    const term = document.getElementById('fi').value;
-    if (!term) return;
-    const ed = document.getElementById('editor');
-    const html = ed.innerHTML;
-    const esc = term.replace(/[.*+?^${}()|[\]\\]/g,'\\$&');
-    const count = (html.match(new RegExp(esc,'gi'))||[]).length;
-    ed.innerHTML = html.replace(new RegExp(esc,'gi'), m=>`<mark style="background:#FDE68A;color:#92400E">${m}</mark>`);
-    document.getElementById('fr-info').textContent = count ? `${count} ocorrência(s) encontrada(s)` : 'Nenhuma ocorrência.';
-  }
+if(type==='html'){
+content = editor.innerHTML;
+mime='text/html';
+}
 
-  function doReplace() {
-    const f = document.getElementById('fi').value;
-    const r = document.getElementById('ri').value;
-    if (!f) return;
-    doClear();
-    const ed = document.getElementById('editor');
-    const esc = f.replace(/[.*+?^${}()|[\]\\]/g,'\\$&');
-    const count = (ed.innerHTML.match(new RegExp(esc,'gi'))||[]).length;
-    ed.innerHTML = ed.innerHTML.replace(new RegExp(esc,'gi'), r);
-    document.getElementById('fr-info').textContent = `${count} substituição(ões) feita(s)`;
-    updateStatus();
-  }
+const blob = new Blob([content],{type:mime});
+const a = document.createElement('a');
+a.href = URL.createObjectURL(blob);
+a.download = 'documento.' + type;
+a.click();
+}
 
-  function doClear() {
-    document.getElementById('editor').querySelectorAll('mark').forEach(m => m.replaceWith(document.createTextNode(m.textContent)));
-    document.getElementById('fr-info').textContent = '';
-  }
+async function loadFile(){
 
-  // Stats
-  function loadStats() {
-    const text = getText().trim();
-    const words = text ? text.split(/\s+/).filter(w=>w) : [];
-    const sentences = (text.match(/[.!?]+/g)||[]).length;
-    const readMin = Math.max(1, Math.round(words.length/200));
-    document.getElementById('stat-grid').innerHTML = `
-      <div class="stat-card"><div class="stat-lbl">Palavras</div><div class="stat-val">${words.length}</div></div>
-      <div class="stat-card"><div class="stat-lbl">Caracteres</div><div class="stat-val">${text.length}</div></div>
-      <div class="stat-card"><div class="stat-lbl">Frases</div><div class="stat-val">${sentences}</div></div>
-      <div class="stat-card"><div class="stat-lbl">Leitura</div><div class="stat-val">${readMin} min</div></div>
-    `;
-    const freq = {};
-    words.forEach(w => { const wc = w.toLowerCase().replace(/[^a-záéíóúâêôãõüçàèìòùñ]/gi,''); if(wc.length>3) freq[wc]=(freq[wc]||0)+1; });
-    const top = Object.entries(freq).sort((a,b)=>b[1]-a[1]).slice(0,8);
-    const max = top[0]?.[1]||1;
-    document.getElementById('freq-list').innerHTML = top.length
-      ? top.map(([w,n])=>`<div class="freq-item"><span class="freq-word">${w}</span><div class="freq-bar" style="width:${Math.round(n/max*70)+8}px"></div><span class="freq-n">${n}</span></div>`).join('')
-      : '<p style="font-size:13px;color:var(--text3)">Escreva algo no editor primeiro.</p>';
-  }
+const file = document.getElementById('fileInput').files[0];
 
-  // Export
-  function htmlToMd(html) {
-    return html.replace(/<b>(.*?)<\/b>/gi,'**$1**').replace(/<strong>(.*?)<\/strong>/gi,'**$1**')
-      .replace(/<i>(.*?)<\/i>/gi,'_$1_').replace(/<em>(.*?)<\/em>/gi,'_$1_')
-      .replace(/<li[^>]*>(.*?)<\/li>/gi,'- $1\n').replace(/<br\s*\/?>/gi,'\n')
-      .replace(/<\/p>/gi,'\n\n').replace(/<[^>]+>/g,'')
-      .replace(/&amp;/g,'&').replace(/&lt;/g,'<').replace(/&gt;/g,'>').replace(/&nbsp;/g,' ').trim();
-  }
+if(!file)return;
 
-  function exportAs(type) {
-    const plain = getText(), html = getHTML();
-    let content='', mime='text/plain', ext=type;
-    if(type==='txt') content=plain;
-    else if(type==='html') { content=`<!DOCTYPE html><html><head><meta charset="utf-8"><title>Documento</title><style>body{font-family:sans-serif;max-width:700px;margin:40px auto;line-height:1.75}</style></head><body>${html}</body></html>`; mime='text/html'; }
-    else if(type==='md') content=htmlToMd(html);
-    else if(type==='csv') content=plain.split('\n').map(l=>`"${l.replace(/"/g,'""')}"`).join('\n'); 
-    else if(type==='json') { content=JSON.stringify({lines:plain.split('\n'),wordCount:plain.split(/\s+/).length},null,2); mime='application/json'; }
-    const blob = new Blob([content],{type:mime});
-    const a = document.createElement('a');
-    a.href = URL.createObjectURL(blob);
-    a.download = 'documento.' + ext;
-    a.click();
-    toast('Arquivo baixado!');
-  }
+if(file.type === 'application/pdf'){
 
-  function printDoc() {
-    const w = window.open('','_blank');
-    w.document.write(`<!DOCTYPE html><html><head><meta charset="utf-8"><title>Imprimir</title><style>body{font-family:serif;max-width:700px;margin:40px auto;line-height:1.75;font-size:14pt}</style></head><body>${getHTML()}</body></html>`);
-    w.document.close(); w.print();
-  }
+const reader = new FileReader();
 
-  updateStatus();
+reader.onload = async function(){
+
+const typedarray = new Uint8Array(this.result);
+
+const pdf = await pdfjsLib.getDocument(typedarray).promise;
+
+let fullText = '';
+
+for(let i=1;i<=pdf.numPages;i++){
+
+const page = await pdf.getPage(i);
+
+const textContent = await page.getTextContent();
+
+const textItems = textContent.items.map(item=>item.str);
+
+fullText += textItems.join(' ') + '\\n\\n';
+
+}
+
+editor.innerText = fullText;
+updateStats();
+saveContent();
+
+}
+
+reader.readAsArrayBuffer(file);
+
+return;
+}
+
+const reader = new FileReader();
+
+reader.onload = function(e){
+editor.innerText = e.target.result;
+updateStats();
+saveContent();
+}
+
+reader.readAsText(file);
+}
+
+loadContent();
+updateStats();
 </script>
+
 </body>
 </html>
